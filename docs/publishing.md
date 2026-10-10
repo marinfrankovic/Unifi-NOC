@@ -24,6 +24,8 @@ Stable `vX.Y.Z` tags matching `VERSION` publish `X.Y.Z`, `X.Y`, `X` and `latest`
 
 Enable Pages with **GitHub Actions** as its build source. Set repository variable `DOCKERHUB_USERNAME=mfrankovic` and secret `DOCKERHUB_TOKEN` to a dedicated Docker Hub write token. Never place that token in source or pass it to a conversational prompt. Store it using GitHub's encrypted secret settings or the CLI through a protected process.
 
+The separate `DOCKERHUB_METADATA_TOKEN` requires Docker Hub's `repo:admin` scope to update repository descriptions. It is used only by the metadata job, not image builds. Docker Hub PAT scopes are account-wide, so this token is more privileged than the write token; protect it and rotate both before expiry. The initial tokens expire after one year. The Windows `tools/configure-publishing.ps1` helper reads the existing Docker Desktop login, initializes public repositories and stores new expiring tokens directly in GitHub encrypted secrets without writing them to disk. Run it only from a trusted machine.
+
 The publishing workflow refreshes Docker Hub short/full descriptions using the README. Image labels identify source, documentation, license, version and revision. Docker Hub public visibility and metadata are set during onboarding. Categories depend on account/platform support; do not claim verified-publisher status.
 
 ## Stable Release
