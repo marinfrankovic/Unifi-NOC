@@ -1,0 +1,160 @@
+name: Validate And Publish
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Privacy, Tests And Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      database:
+        image: timescale/timescaledb:2.30.2-pg17
+        env:
+          POSTGRES_USER: noc
+          POSTGRES_PASSWORD: fixture-test-password
+          POSTGRES_DB: noc_test
+          TIMESCALEDB_TELEMETRY: 'off'
+        ports: ['127.0.0.1:5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U noc -d noc_test"
+          --health-interval 10s --health-timeout 5s --health-retries 10
+    env:
+      NOC_BROWSER_CHANNEL: chromium
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Check Publication Privacy
+        run: node tools/privacy-check.mjs --self-test
+      - name: Install And Build Frontend
+        run: |
+          npm --prefix frontend ci --no-audit --no-fund
+          npm --prefix frontend run build
+      - name: Install Test Dependencies
+        run: |
+          python -m pip install -r backend/requirements.txt playwright
+          python -m playwright install --with-deps chromium
+      - name: Offline Security And Browser Regressions
+        run: python tools/security_test.py
+      - name: Migration Regressions
+        env:
+          NOC_TEST_DATABASE_URL: postgresql://noc:fixture-test-password@127.0.0.1:5432/noc_test
+        run: python tools/migration_test.py
+      - name: Validate Compose And Product Page
+        run: |
+          docker compose config --quiet
+          docker compose -f docker-compose.yml -f compose.build.yml config --quiet
+          node tools/build-site.mjs
+          python tools/site-test.py
+
+  images:
+    name: Publish ${{ matrix.role }} Image
+    if: github.event_name != 'pull_request'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        role: [backend, web]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Version Metadata
+        id: metadata
+        env:
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+        run: node tools/release-metadata.mjs ${{ matrix.role }}
+      - uses: docker/login-action@v4
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.role == 'backend' && 'backend/Dockerfile' || 'frontend/Dockerfile' }}
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.metadata.outputs.tags }}
+          build-args: |
+            VERSION=${{ steps.metadata.outputs.version }}
+            REVISION=${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.role }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.role }}
+
+  hub-description:
+    name: Update Docker Hub Documentation
+    if: github.event_name != 'pull_request'
+    needs: images
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Sync Image Descriptions
+        env:
+          DOCKERHUB_USERNAME: ${{ vars.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_METADATA_TOKEN }}
+        run: node tools/hub-metadata.mjs
+
+  pages:
+    name: Update Project Website
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - uses: actions/configure-pages@v5
+      - name: Build Versioned Product Page
+        run: node tools/build-site.mjs
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site/dist
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

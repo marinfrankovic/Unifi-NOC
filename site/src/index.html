@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Unifi-NOC | Self-Hosted UniFi Network Monitoring</title>
+  <meta name="description" content="A noncommercial, self-hosted UniFi network operations dashboard: site health, WAN, SD-WAN, topology, telemetry, alerts and wallboards.">
+  <meta property="og:title" content="Unifi-NOC">
+  <meta property="og:description" content="See site health, connectivity and the signals that need attention. Self-hosted. Noncommercial. Independent of Ubiquiti.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://marinfrankovic.github.io/Unifi-NOC/">
+  <meta property="og:image" content="https://marinfrankovic.github.io/Unifi-NOC/assets/overview.png">
+  <meta name="theme-color" content="#167456">
+  <link rel="canonical" href="https://marinfrankovic.github.io/Unifi-NOC/">
+  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="masthead">
+    <a class="identity" href="./"><img src="assets/mark.svg" alt="" width="32" height="32">Unifi-NOC</a>
+    <nav aria-label="Main navigation">
+      <a href="#screens">Screens</a>
+      <a href="https://github.com/marinfrankovic/Unifi-NOC/blob/main/docs/user-guide.md">Docs</a>
+      <a class="github" href="https://github.com/marinfrankovic/Unifi-NOC">GitHub</a>
+    </nav>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="title">
+      <picture>
+        <source media="(max-width: 640px)" srcset="assets/overview-mobile.png">
+        <img class="hero-screen" src="assets/overview.png" alt="Unifi-NOC dashboard showing two synthetic sites, network health, WAN, devices and an SD-WAN connection" fetchpriority="high" width="1600" height="1000">
+      </picture>
+      <div class="hero-copy">
+        <div class="hero-inner">
+          <span class="eyebrow">Self-hosted network operations</span>
+          <h1 id="title">Unifi-NOC</h1>
+          <p>Site health. Real connectivity. The signals that need attention.</p>
+          <div class="actions">
+            <a class="primary" href="https://github.com/marinfrankovic/Unifi-NOC/blob/main/docs/deployment.md">Deploy With Docker</a>
+            <a href="https://github.com/marinfrankovic/Unifi-NOC">Explore the Source <span aria-hidden="true">&rarr;</span></a>
+          </div>
+          <div class="release">Source v%%VERSION%% <span>&middot;</span> Build %%BUILD%% <span>&middot;</span> <a href="https://github.com/marinfrankovic/Unifi-NOC/commit/%%COMMIT%%">%%COMMIT%%</a></div>
+        </div>
+      </div>
+    </section>
+    <section class="signals band">
+      <div class="section-intro"><span class="eyebrow">One connected view</span><h2>From the WAN to the client.</h2><p>Understand what is happening across your selected UniFi sites without assembling another dashboard stack.</p></div>
+      <div class="signal-list">
+        <article><span class="number">01</span><div><h3>Health With Context</h3><p>Site and device health alongside freshness, missing-data coverage and the reasons behind a warning.</p></div></article>
+        <article><span class="number">02</span><div><h3>Connections, Not Assumptions</h3><p>WAN and discovered SD-WAN links with separate controller state, traffic counters and optional probe measurements.</p></div></article>
+        <article><span class="number">03</span><div><h3>Attention Without Losing History</h3><p>Unacknowledged alerts, availability, maintenance and observed configuration changes, with site-scoped access.</p></div></article>
+      </div>
+    </section>
+    <section class="screens band" id="screens">
+      <div class="section-heading"><div><span class="eyebrow">Inside the dashboard</span><h2>Follow the signal.</h2></div><p>Actual interface. Synthetic demonstration data.</p></div>
+      <figure class="wide-screen"><a href="assets/topology.png"><img src="assets/topology.png" alt="Discovered topology with synthetic sites, gateways, switches and access points" loading="lazy" width="1440" height="1000"></a><figcaption><strong>Topology</strong><span>Discovered infrastructure and inter-site relationships.</span></figcaption></figure>
+      <div class="screen-pair">
+        <figure><a href="assets/charts.png"><img src="assets/charts.png" alt="SD-WAN linked traffic and measurement charts with synthetic data" loading="lazy" width="1440" height="1000"></a><figcaption><strong>SD-WAN History</strong><span>Linked charts, coverage and honest missing-data gaps.</span></figcaption></figure>
+        <figure><a href="assets/wallboard.png"><img src="assets/wallboard.png" alt="Fullscreen wallboard with synthetic site health and connectivity" loading="lazy" width="1440" height="1000"></a><figcaption><strong>Wallboard</strong><span>A focused view for continuous monitoring.</span></figcaption></figure>
+      </div>
+    </section>
+    <section class="operate band">
+      <div><span class="eyebrow">Your infrastructure, your data</span><h2>Run It On Your Terms.</h2><p>Docker Compose, persistent storage and owner-managed setup. No project-operated telemetry service and no separate Grafana dependency.</p></div>
+      <div class="resource-list">
+        <a href="https://github.com/marinfrankovic/Unifi-NOC/blob/main/docs/deployment.md"><span>Deployment &amp; TLS</span><span aria-hidden="true">&rarr;</span></a>
+        <a href="https://github.com/marinfrankovic/Unifi-NOC/blob/main/docs/administration.md"><span>Users, Backups &amp; Upgrades</span><span aria-hidden="true">&rarr;</span></a>
+        <a href="https://github.com/marinfrankovic/Unifi-NOC/blob/main/docs/monitoring.md"><span>Monitoring Coverage &amp; Limits</span><span aria-hidden="true">&rarr;</span></a>
+        <a href="https://hub.docker.com/r/mfrankovic/unifi-noc-backend"><span>Docker Hub: Backend</span><span aria-hidden="true">&rarr;</span></a>
+        <a href="https://hub.docker.com/r/mfrankovic/unifi-noc-web"><span>Docker Hub: Web</span><span aria-hidden="true">&rarr;</span></a>
+        <a href="https://github.com/marinfrankovic/Unifi-NOC/releases"><span>Stable Releases</span><span aria-hidden="true">&rarr;</span></a>
+      </div>
+    </section>
+    <section class="license-band band">
+      <h2>Noncommercial. Independent.</h2>
+      <p>Source-available under <a href="https://github.com/marinfrankovic/Unifi-NOC/blob/main/LICENSE">PolyForm Noncommercial 1.0.0</a>. Personal, educational and qualifying noncommercial use is permitted under its terms. Commercial use requires separate permission. This is not an OSI open-source license.</p>
+      <p>Unifi-NOC is not affiliated with, endorsed by or supported by Ubiquiti Inc. UniFi and Ubiquiti are their owner's trademarks. Supplied as-is, without warranty, SLA or guaranteed device/API compatibility. Monitor only authorized networks; measurement support and coverage vary. Read the <a href="https://github.com/marinfrankovic/Unifi-NOC/blob/main/NOTICE">full disclaimers</a>.</p>
+    </section>
+  </main>
+  <footer><span>Unifi-NOC <span class="footer-version">v%%VERSION%%</span></span><div><a href="https://github.com/marinfrankovic/Unifi-NOC/issues">Issues</a><a href="https://github.com/marinfrankovic/Unifi-NOC/blob/main/SECURITY.md">Security</a><a href="https://github.com/marinfrankovic/Unifi-NOC">Source</a></div></footer>
+</body>
+</html>

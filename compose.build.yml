@@ -1,0 +1,13 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+  collector:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile

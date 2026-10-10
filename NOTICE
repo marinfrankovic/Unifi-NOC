@@ -1,0 +1,20 @@
+Required Notice: Unifi-NOC is licensed under PolyForm Noncommercial 1.0.0.
+
+Unifi-NOC is an independent community project. It is not affiliated with,
+endorsed by, or supported by Ubiquiti Inc. UniFi and Ubiquiti are trademarks
+of their respective owner. Product names identify compatibility only.
+
+The software is provided as-is, without warranty, service-level agreement,
+or guaranteed compatibility. It is not a substitute for professional
+security monitoring, incident response, or vendor-supported management.
+
+Monitor only networks you own or are authorized to access. Optional probes
+send network traffic, and optional gateway measurements establish SSH
+connections. The application does not intentionally change UniFi settings.
+
+Telemetry may contain IP/MAC addresses, device names, client identifiers,
+and event data. You are responsible for lawful collection, access control,
+retention, backups, and protecting credentials and monitoring data.
+
+Third-party dependencies and container base images remain subject to their
+own licenses. No license to Ubiquiti software or services is granted here.

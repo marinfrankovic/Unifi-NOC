@@ -1,0 +1,10 @@
+fastapi>=0.115,<1
+anyio>=4.6,<5
+uvicorn[standard]>=0.32,<1
+asyncpg>=0.30,<1
+httpx>=0.28,<1
+asyncssh>=2.18,<3
+icmplib>=3.0.4,<4
+bcrypt>=4.2,<6
+pydantic>=2.9,<3
+cryptography>=44,<49

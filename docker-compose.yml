@@ -1,0 +1,125 @@
+name: ${STACK_NAME:-unifi-noc}
+
+x-backend: &backend
+  image: mfrankovic/unifi-noc-backend:${NOC_VERSION:-1.0.0}
+  restart: unless-stopped
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    DATABASE_URL: postgresql://noc@db:5432/noc
+    POSTGRES_PASSWORD_FILE: /run/noc-secrets/db-password
+    UI_SETUP: "true"
+    SESSION_COOKIE: ${SESSION_COOKIE:-noc_session}
+    TZ: ${TZ:-UTC}
+  read_only: true
+  tmpfs: [/tmp]
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  logging:
+    driver: json-file
+    options: {max-size: 10m, max-file: "5"}
+
+services:
+  init-secrets:
+    image: alpine:3.22
+    command: ["sh", "-ec", "umask 077; if [ ! -s /secrets/db-password ]; then head -c 48 /dev/urandom | base64 | tr -d '\n' > /secrets/db-password; fi; chmod 444 /secrets/db-password"]
+    volumes: ["db-secrets:/secrets"]
+    networks: [data]
+    security_opt: [no-new-privileges:true]
+
+  db:
+    image: timescale/timescaledb:2.30.2-pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: noc
+      POSTGRES_USER: noc
+      POSTGRES_PASSWORD_FILE: /run/noc-secrets/db-password
+      TIMESCALEDB_TELEMETRY: "off"
+      TS_TUNE_MEMORY: 1GB
+      TS_TUNE_NUM_CPUS: "2"
+      TZ: ${TZ:-UTC}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - db-secrets:/run/noc-secrets:ro
+    networks: [data]
+    depends_on:
+      init-secrets: {condition: service_completed_successfully}
+    shm_size: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U noc -d noc"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    security_opt: [no-new-privileges:true]
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+  collector:
+    <<: *backend
+    command: ["python", "-m", "noc.collector"]
+    volumes:
+      - db-secrets:/run/noc-secrets:ro
+      - noc-state:/var/lib/noc
+    networks: [data, egress]
+    depends_on:
+      db: {condition: service_healthy}
+
+  api:
+    <<: *backend
+    networks: [data, edge]
+    volumes:
+      - db-secrets:/run/noc-secrets:ro
+      - noc-state:/var/lib/noc
+    depends_on:
+      db: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/healthz', timeout=3).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  web:
+    image: mfrankovic/unifi-noc-web:${NOC_VERSION:-1.0.0}
+    restart: unless-stopped
+    environment:
+      BASE_PATH: /unifi
+      HTTPS_PORT: ${HTTPS_PORT:-8096}
+      TLS_CN: ${TLS_CN:-localhost}
+      TZ: ${TZ:-UTC}
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${SERVER_PORT:-8095}:8080"
+      - "${BIND_ADDRESS:-127.0.0.1}:${HTTPS_PORT:-8096}:8443"
+    volumes: ["web-certs:/etc/nginx/certs"]
+    networks: [edge, ingress]
+    depends_on:
+      api: {condition: service_started}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    security_opt: [no-new-privileges:true]
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+networks:
+  data:
+    internal: true
+    ipam: {config: [{subnet: "${NOC_DATA_SUBNET:-172.31.60.0/24}"}]}
+  edge:
+    internal: true
+    ipam: {config: [{subnet: "${NOC_EDGE_SUBNET:-172.31.61.0/24}"}]}
+  egress:
+    ipam: {config: [{subnet: "${NOC_EGRESS_SUBNET:-172.31.62.0/24}"}]}
+  ingress:
+    ipam: {config: [{subnet: "${NOC_INGRESS_SUBNET:-172.31.63.0/24}"}]}
+
+volumes:
+  db-data:
+  web-certs:
+  db-secrets:
+  noc-state:
